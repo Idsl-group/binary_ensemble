@@ -1,42 +1,40 @@
 import numpy as np
+import pandas
+from sklearn.impute import KNNImputer
+from sklearn.preprocessing import MinMaxScaler
 
-def cross_validate(model, X, y, k=5):
-    n, d = X.shape
-    Xsplits = []
-    ysplits = []
+def process_wearable_dataset():
+    dat = pandas.read_csv('./data/wearable.csv')
+    new_data = dat[['Weight', 'Age',
+                    'mean.Temperature_480',
+                    'mean.Temperature_60',
+                    'mean.Humidity_60',
+                    'mean.Humidity_480',
+                    'mean.hr_5',
+                    'mean.hr_15',
+                    'mean.hr_60',
+                    'mean.WristT_5',
+                    'mean.WristT_15',
+                    'mean.WristT_60',
+                    'mean.PantT_5', 
+                    'mean.PantT_60', 
+                    'Height',
+                    'Coffeeintake',                   
+                    'mean.AnkleT_5',
+                    'mean.AnkleT_15',
+                    'mean.AnkleT_60',]]
 
+    new_data = np.array(new_data)
 
-def train_and_test(model, Xtrain, ytrain, Xtest, ytest, k=3):
-    n, _ = Xtrain.shape
-    ind = np.random.choice(range(n), size=n, replace=False)
-    Xtrain = Xtrain[ind]
-    ytrain = ytrain[ind]
-    n, _ = Xtest.shape
-    ind = np.random.choice(range(n), size=n, replace=False)
-    Xtest = Xtest[ind]
-    ytest = ytest[ind]
+    print('KNN Imputer')
 
-    X_test_splits = np.array_split(Xtest, k)
-    y_test_splits = np.array_split(ytest, k)
-    train_score = []
-    test_score = []
-    for i in range(k):
-        Xcurr_test = X_test_splits[i]
-        ycurr_test = y_test_splits[i]
-        X = Xtrain.copy()
-        y = ytrain.copy()
-        for j in range(k):
-            if i == j:
-                continue
-            X = np.concatenate((X, X_test_splits[j]))
-            y = np.concatenate((y, y_test_splits[j]))
-        n, _ = X.shape
-        ind = np.random.choice(range(n), size=n, replace=False)
-        X = X[ind]
-        y = y[ind]
-        model.fit(X, y)
-        y_pred = model.predict(X)
-        train_score.append(np.mean(y_pred == y))
-        y_test_pred = model.predict(Xcurr_test)
-        test_score.append(np.mean(y_test_pred == ycurr_test))
-    return {'train': train_score, 'test': test_score}
+    imputer = KNNImputer(n_neighbors=10)
+    new_data = imputer.fit_transform(new_data)
+    scaler = MinMaxScaler()
+    new_data = scaler.fit_transform(new_data)
+
+    y = dat['therm_pref']
+    y += 1
+    X = np.array(new_data, dtype=float)
+    y = np.array(y, dtype=int)
+    return X, y
