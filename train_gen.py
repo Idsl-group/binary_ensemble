@@ -18,7 +18,7 @@ n, d = X_train.shape
 X = 0
 y = 0
 gen_class = GenClass(d, num_classes=3)
-gen_class.train(X_train, y_train, X_test, y_test, num_epoch=400)
+gen_class.train(X_train, y_train, X_test, y_test, num_epoch=100)
 
 #  print('Random Forest without Gen')
 #  model = RandomForestClassifier()
