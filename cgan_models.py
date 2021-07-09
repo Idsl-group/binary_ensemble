@@ -3,6 +3,9 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import f1_score
+from models import Classifier
+from sklearn.svm import SVC
 
 
 class Discriminator(nn.Module):
@@ -11,13 +14,18 @@ class Discriminator(nn.Module):
         self.num_classes = num_classes
         self.embed = nn.Embedding(num_classes, num_classes)
         self.main = nn.Sequential(
+            #  nn.Linear(input_size+num_classes, 128),
+            #  nn.LeakyReLU(0.1),
+            #  nn.Linear(128, 64),
+            #  nn.LeakyReLU(0.1),
+            #  nn.Linear(64, 32),
+            #  nn.LeakyReLU(0.1),
+            #  nn.Linear(32, 1),
             nn.Linear(input_size+num_classes, 128),
-            nn.LeakyReLU(0.1),
+            nn.ReLU(),
             nn.Linear(128, 64),
-            nn.LeakyReLU(0.1),
-            nn.Linear(64, 32),
-            nn.LeakyReLU(0.1),
-            nn.Linear(32, 1),
+            nn.ReLU(),
+            nn.Linear(64, 1)
         )
 
     def forward(self, x, labels=0):
@@ -32,14 +40,16 @@ class Generator(nn.Module):
         self.num_classes = num_classes
         self.embed = nn.Embedding(num_classes, num_classes)
         self.main = nn.Sequential(
-            nn.Linear(input_size+num_classes, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, output_size),
-            nn.ReLU()
+            #  nn.Linear(input_size+num_classes, 128),
+            #  nn.LeakyReLU(0.1),
+            #  nn.Linear(128, 64),
+            #  nn.LeakyReLU(0.1),
+            #  nn.Linear(64, output_size),
+            #  nn.Sigmoid()
+            nn.Linear(num_classes+input_size, 128),
+            nn.LeakyReLU(0.1),
+            nn.Linear(128, output_size),
+            nn.Sigmoid()
         )
 
     def forward(self, x, labels=0):
@@ -81,7 +91,7 @@ class CGAN():
         self.zdim = zdim
         self.num_classes = num_classes
 
-    def train(self, X_train, y_train, batch_size=64, num_epoch=1000):
+    def train(self, X_train, y_train, X_test, y_test, batch_size=64, num_epoch=1000):
         n, _ = X_train.shape
         y = y_train.copy()
         X = X_train.copy()
@@ -98,6 +108,7 @@ class CGAN():
         epochs = []
         train_errs = []
         test_errs = []
+        f1 = []
         for epoch in range(num_epoch):
             for i in range(len(Xtrain_split)):
                 currX = torch.FloatTensor(Xtrain_split[i])
@@ -131,16 +142,20 @@ class CGAN():
                     gen_loss.backward()
                     self.gen_optimizer.step()
 
-            #  train_err, test_err = self.getErrs(X_train, y_train, X_test, y_test)
-            #  train_errs.append(train_err)
-            #  test_errs.append(test_err)
-            print('Epoch: '+str(epoch))
-        #  plt.plot(epochs, gen_errs)
-        #  plt.show()
-        #  n = len(train_errs)
-        #  plt.plot(range(n), train_errs)
-        #  plt.plot(range(n), test_errs)
-        #  plt.show()
+            t, f = self.getErrs(X_train, y_train, X_test, y_test)
+            test_errs.append(t)
+            f1.append(f)
+            if (epoch + 1) % 25 == 0:
+                print('Epoch: '+str(epoch+1))
+        #  print('*************************************')
+        #  print('CGAN')
+        #  print('F1 Score: '+str(np.max(f1)))
+        #  print('Test Accuracy: '+str(test_errs[np.argmax(f1)]))
+        #  print('Epochs Required: '+str(np.argmax(f1)))
+        f1_max = np.max(f1)
+        test_for_f1 = test_errs[np.argmax(f1)]
+        epoch_no = np.argmax(f1)
+        return f1_max, test_for_f1, epoch_no
 
     def getErrs(self, X, y, X_test, y_test):
         X_train = X.copy()
@@ -161,11 +176,12 @@ class CGAN():
             X_train = np.concatenate((X_train, new))
             y_train = np.concatenate((y_train, labels))
 
+        n, d = X_train.shape
+        #  model = Classifier(d, 3)
         model = RandomForestClassifier()
         model.fit(X_train, y_train)
-        y_pred = model.predict(X_train)
-        train_err = (y_pred != y_train).mean()
         y_pred = model.predict(X_test)
-        test_err = (y_pred != y_test).mean()
-        return train_err, test_err
+        test_err = (y_pred == y_test).mean()
+        f = f1_score(y_test, y_pred, average='weighted')
+        return test_err, f
 

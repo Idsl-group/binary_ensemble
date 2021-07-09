@@ -12,6 +12,8 @@ class GenClass():
     def __init__(self, input_size, num_classes=10, lr=0.001):
         zdim = 64
         self.gen = Generator(zdim, input_size, input_size)
+        self.input_size = input_size
+        self.num_classes = num_classes
         self.classifier = Classifier(input_size, num_classes)
         self.criterion = nn.CrossEntropyLoss()
         self.optim = torch.optim.Adam(self.classifier.parameters(), lr=lr)
@@ -52,20 +54,18 @@ class GenClass():
                     gen_loss.backward()
                     self.gen_optim.step()
 
+            #  model = Classifier(self.input_size, self.num_classes)
             model = RandomForestClassifier()
             t, f = self.get_errs(model, X_train, y_train, X_test, y_test)
             test_losses.append(t)
             f1_scores.append(f)
-            print(epoch)
-        self.show_plot(test_losses, f1_scores)
-
-    def show_plot(self, test_losses, f1_scores):
-        plt.plot(range(len(test_losses)), test_losses, label='Test')
-        plt.plot(range(len(f1_scores)), f1_scores, label='F1 score')
-        print(np.max(f1_scores))
-        print(test_losses[np.argmax(f1_scores)])
-        plt.legend(loc='best')
-        plt.show()
+            if (epoch + 1) % 25 == 0:
+                print('Epoch: '+str(epoch+1))
+        f1_max = np.max(f1_scores)
+        test_for_f1 = test_losses[np.argmax(f1_scores)]
+        epoch_no = np.argmax(f1_scores)
+        return f1_max, test_for_f1, epoch_no
+        #  plt.show()
 
     def get_errs(self, model, X_train, y_train, X_test, y_test):
         counts = np.bincount(y_train)

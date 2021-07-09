@@ -7,18 +7,43 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score
 from gen_class import GenClass
+from utils import mnist_imbalanced, imaginary_dataset
+from sklearn.svm import SVC
+from cgan_models import CGAN
 
-X, y = process_wearable_dataset()
+#  X_train, y_train, X_test, y_test = mnist_imbalanced()
+#  X_train, y_train, X_test, y_test = imaginary_dataset()
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2)
 
-n, d = X_train.shape
+#  X_train, X_test, y_train, y_test = train_test_split(
+    #  X, y, test_size=0.2)
 
-X = 0
-y = 0
-gen_class = GenClass(d, num_classes=3)
-gen_class.train(X_train, y_train, X_test, y_test, num_epoch=100)
+for _ in range(5):
+    X_train, y_train, X_test, y_test = process_wearable_dataset()
+
+    n, d = X_train.shape
+
+    X = 0
+    y = 0
+    cgan = CGAN(d, num_classes=3)
+    scores = cgan.train(X_train, y_train, X_test, y_test, num_epoch=200)
+    gen_class = GenClass(d, num_classes=3)
+    gen_scores = gen_class.train(X_train, y_train, X_test, y_test, num_epoch=200)
+    print('***********************')
+    print('Gen Class')
+    print('F1: '+str(gen_scores[0]))
+    print('Test: '+str(gen_scores[1]))
+    print('Epoch: '+str(gen_scores[2]))
+    print('*******************')
+    print('F1: '+str(scores[0]))
+    print('Test: '+str(scores[1]))
+    print('Epoch: '+str(scores[2]))
+
+#  model = SVC()
+#  model.fit(X_train, y_train)
+#  y_pred = model.predict(X_test)
+#  print((y_pred == y_test).mean())
+#  print(f1_score(y_test, y_pred, average='weighted'))
 
 #  print('Random Forest without Gen')
 #  model = RandomForestClassifier()

@@ -3,6 +3,9 @@ import pandas
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+import numpy as np
+from sklearn.model_selection import train_test_split
 
 def process_wearable_dataset():
     dat = pandas.read_csv('./data/wearable.csv')
@@ -38,8 +41,52 @@ def process_wearable_dataset():
     y += 1
     X = np.array(new_data, dtype=float)
     y = np.array(y, dtype=int)
-    print(np.bincount(y))
-    return X, y
+
+    n, d = X.shape
+    ind = np.random.choice(range(n), n, replace=False)
+    X = X[ind]
+    y = y[ind]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2)
+
+
+    majority = np.bincount(y_train)[1]
+    minority = 100
+
+    X_sel = X_train[y_train == 0]
+    n, _ = X_sel.shape
+    size = minority
+    ind = np.random.choice(range(n), size=size, replace=False)
+    X_new = X_sel[ind]
+    y_new = np.zeros(size).astype(int)
+
+    X_sel = X_train[y_train == 1]
+    n, _ = X_sel.shape
+    size = majority
+    ind = np.random.choice(range(n), size=size, replace=False)
+    new = X_sel[ind]
+    X_new = np.concatenate((X_new, new))
+    new = np.zeros(size).astype(int) + 1
+    y_new = np.concatenate((y_new, new))
+
+    X_sel = X_train[y_train == 2]
+    n, _ = X_sel.shape
+    size = minority
+    ind = np.random.choice(range(n), size=size, replace=False)
+    new = X_sel[ind]
+    X_new = np.concatenate((X_new, new))
+    new = np.zeros(size).astype(int) + 2
+    y_new = np.concatenate((y_new, new))
+
+    n, d = X_new.shape
+    indices = np.random.choice(range(n), n, replace=False)
+    X_new = X_new[indices]
+    y_new = y_new[indices]
+
+    print(np.bincount(y_new))
+    print(np.bincount(y_test))
+    return X_new, y_new, X_test, y_test
 
 
 def mnist_imbalanced():
@@ -50,7 +97,7 @@ def mnist_imbalanced():
 
     X_sel = X_train[y_train == 0]
     n, _ = X_sel.shape
-    size = 100
+    size = 10
     ind = np.random.choice(range(n), size=size, replace=False)
     X_train_new = X_sel[ind]
     y_train_new = np.zeros(size).astype(int)
@@ -66,7 +113,7 @@ def mnist_imbalanced():
 
     X_sel = X_train[y_train == 2]
     n, _ = X_sel.shape
-    size = 100
+    size = 10
     ind = np.random.choice(range(n), size=size, replace=False)
     new = X_sel[ind]
     X_train_new = np.concatenate((X_train_new, new))
@@ -76,14 +123,14 @@ def mnist_imbalanced():
 
     X_sel = X_test[y_test == 0]
     n, _ = X_sel.shape
-    size = 140 + int(np.random.normal(0,15))
+    size = 100
     ind = np.random.choice(range(n), size=size, replace=False)
     X_test_new = X_sel[ind]
     y_test_new = np.zeros(size).astype(int)
 
     X_sel = X_test[y_test == 1]
     n, _ = X_sel.shape
-    size = 420 + int(np.random.normal(0,15))
+    size = 100
     ind = np.random.choice(range(n), size=size, replace=False)
     new = X_sel[ind]
     X_test_new = np.concatenate((X_test_new, new))
@@ -92,7 +139,7 @@ def mnist_imbalanced():
 
     X_sel = X_test[y_test == 2]
     n, _ = X_sel.shape
-    size = 140 + int(np.random.normal(0,15))
+    size = 100
     ind = np.random.choice(range(n), size=size, replace=False)
     new = X_sel[ind]
     X_test_new = np.concatenate((X_test_new, new))
@@ -116,3 +163,32 @@ def mnist_imbalanced():
 
     return X_train_new, y_train_new, X_test_new, y_test_new
 
+
+def imaginary_dataset():
+    X, y = make_classification(n_samples=12000, n_features=20, n_informative=10, n_classes=3)
+    X_new = X.copy()
+    y_new = y.copy()
+    X_new = X_new[y == 1]
+    y_new = y_new[y==1]
+    sel = X[y==0]
+    n, d = sel.shape
+    ind = np.random.choice(range(n), size=600, replace=False)
+    X_new = np.append(X_new, X[ind], axis=0)
+    y_new = np.append(y_new, np.zeros(600).astype(int))
+    sel = X[y==2]
+    n, d = sel.shape
+    ind = np.random.choice(range(n), size=600, replace=False)
+    X_new = np.append(X_new, X[ind], axis=0)
+    y_new = np.append(y_new, np.zeros(600).astype(int) + 2)
+    n, d = X_new.shape
+    ind = np.random.choice(range(n), n, replace=False)
+    X_new = X_new[ind]
+    y_new = y_new[ind]
+    scaler = MinMaxScaler()
+    X_new = scaler.fit_transform(X_new)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_new, y_new, test_size=0.2)
+
+    return X_train, y_train, X_test, y_test
+
+imaginary_dataset()
