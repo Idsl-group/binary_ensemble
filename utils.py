@@ -7,7 +7,7 @@ from sklearn.datasets import make_classification
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-def process_wearable_dataset():
+def process_wearable_dataset(minority):
     dat = pandas.read_csv('./data/wearable.csv')
     new_data = dat[['Weight', 'Age',
                     'mean.Temperature_480',
@@ -30,8 +30,6 @@ def process_wearable_dataset():
 
     new_data = np.array(new_data)
 
-    print('KNN Imputer')
-
     imputer = KNNImputer(n_neighbors=10)
     new_data = imputer.fit_transform(new_data)
     scaler = MinMaxScaler()
@@ -50,9 +48,11 @@ def process_wearable_dataset():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2)
 
+    counts = np.bincount(y_train)
+    if minority > np.min(counts):
+        minority = np.min(counts)
 
     majority = np.bincount(y_train)[1]
-    minority = 100
 
     X_sel = X_train[y_train == 0]
     n, _ = X_sel.shape
@@ -79,13 +79,17 @@ def process_wearable_dataset():
     new = np.zeros(size).astype(int) + 2
     y_new = np.concatenate((y_new, new))
 
+    # TODO: Remove this later
+    X_new = X_train.copy()
+    y_new = y_train.copy()
+
+
     n, d = X_new.shape
     indices = np.random.choice(range(n), n, replace=False)
     X_new = X_new[indices]
     y_new = y_new[indices]
 
     print(np.bincount(y_new))
-    print(np.bincount(y_test))
     return X_new, y_new, X_test, y_test
 
 

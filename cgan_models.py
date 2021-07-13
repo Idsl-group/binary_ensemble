@@ -13,19 +13,33 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.num_classes = num_classes
         self.embed = nn.Embedding(num_classes, num_classes)
-        self.main = nn.Sequential(
+        #  self.main = nn.Sequential(
+            #  #  nn.Linear(input_size+num_classes, 128),
+            #  #  nn.LeakyReLU(0.1),
+            #  #  nn.Linear(128, 64),
+            #  #  nn.LeakyReLU(0.1),
+            #  #  nn.Linear(64, 32),
+            #  #  nn.LeakyReLU(0.1),
+            #  #  nn.Linear(32, 1),
             #  nn.Linear(input_size+num_classes, 128),
-            #  nn.LeakyReLU(0.1),
+            #  nn.ReLU(),
             #  nn.Linear(128, 64),
-            #  nn.LeakyReLU(0.1),
-            #  nn.Linear(64, 32),
-            #  nn.LeakyReLU(0.1),
-            #  nn.Linear(32, 1),
-            nn.Linear(input_size+num_classes, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            #  nn.ReLU(),
+            #  nn.Linear(64, 1)
+        #  )
+        def block(in_feat, out_feat):
+            layers = [nn.Linear(in_feat, out_feat)]
+            layers.append(nn.Dropout(0.5))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
+
+        self.main = nn.Sequential(
+            *block(input_size + num_classes, 64),
+            *block(64, 128),
+            *block(128, 64),
+            *block(64, 32),
+            *block(32, 16),
+            nn.Linear(16, 1)
         )
 
     def forward(self, x, labels=0):
@@ -39,19 +53,33 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self.num_classes = num_classes
         self.embed = nn.Embedding(num_classes, num_classes)
-        self.main = nn.Sequential(
-            #  nn.Linear(input_size+num_classes, 128),
+        #  self.main = nn.Sequential(
+            #  #  nn.Linear(input_size+num_classes, 128),
+            #  #  nn.LeakyReLU(0.1),
+            #  #  nn.Linear(128, 64),
+            #  #  nn.LeakyReLU(0.1),
+            #  #  nn.Linear(64, output_size),
+            #  #  nn.Sigmoid()
+            #  nn.Linear(num_classes+input_size, 128),
             #  nn.LeakyReLU(0.1),
-            #  nn.Linear(128, 64),
-            #  nn.LeakyReLU(0.1),
-            #  nn.Linear(64, output_size),
+            #  nn.Linear(128, output_size),
             #  nn.Sigmoid()
-            nn.Linear(num_classes+input_size, 128),
-            nn.LeakyReLU(0.1),
-            nn.Linear(128, output_size),
+        #  )
+        def block(in_feat, out_feat):
+            layers = [nn.Linear(in_feat, out_feat)]
+            layers.append(nn.BatchNorm1d(out_feat)) # layers.append(nn.BatchNorm1d(out_feat, 0.8)) # OG
+            layers.append(nn.ReLU()) # layers.append(nn.LeakyReLU(0.2, inplace=True)) # OG
+            return layers
+
+        self.main = nn.Sequential(
+            *block(input_size + num_classes, 128), # *block(opt.latent_dim + opt.n_classes, 128, normalize=False), #OG
+            *block(128, 256),
+            *block(256, 128),
+            *block(128, 64),
+            *block(64, 32),
+            nn.Linear(32, output_size),
             nn.Sigmoid()
         )
-
     def forward(self, x, labels=0):
         new_labels = self.embed(labels)
         inp = torch.cat([x, new_labels], dim=1)

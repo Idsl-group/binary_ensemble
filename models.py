@@ -20,6 +20,13 @@ class Ann(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, input_size, num_classes):
         super(Classifier, self).__init__()
+       #   self.model = nn.Sequential(
+            #  nn.Linear(input_size, 128),
+            #  nn.ReLU(),
+            #  nn.Linear(128, 64),
+            #  nn.ReLU(),
+            #  nn.Linear(64, num_classes)
+        #  )
         self.model = nn.Sequential(
             nn.Linear(input_size, 128),
             nn.ReLU(),
@@ -60,9 +67,17 @@ class Classifier(nn.Module):
 class Generator(nn.Module):
     def __init__(self, input_size, data_length, output_size):
         super(Generator, self).__init__()
+        #  self.model = nn.Sequential(
+            #  nn.Linear(data_length+input_size, 128),
+            #  nn.LeakyReLU(0.1),
+            #  nn.Linear(128, output_size),
+            #  nn.Sigmoid()
+        #  )
         self.model = nn.Sequential(
             nn.Linear(data_length+input_size, 128),
             nn.LeakyReLU(0.1),
+            #  nn.Linear(128, 64),
+            #  nn.LeakyReLU(0.1),
             nn.Linear(128, output_size),
             nn.Sigmoid()
         )
