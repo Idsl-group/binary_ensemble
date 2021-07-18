@@ -21,7 +21,7 @@ class GenClass():
         self.gen_criterion = nn.CrossEntropyLoss()
         self.gen_mse = nn.MSELoss()
 
-    def train(self, X_train, y_train, X_test, y_test, num_epoch=200, batch_size=64):
+    def train(self, X_train, y_train, X_test, y_test, model, num_epoch=200, batch_size=64):
         zdim = 64
         n, d = X_train.shape
         ind = np.arange(n)
@@ -55,11 +55,10 @@ class GenClass():
                     self.gen_optim.step()
 
             #  model = Classifier(self.input_size, self.num_classes)
-            model = RandomForestClassifier()
-            t, f = self.get_errs(model, X_train, y_train, X_test, y_test)
-            test_losses.append(t)
-            f1_scores.append(f)
-            if (epoch + 1) % 25 == 0:
+            if (epoch + 1) % 2 == 0:
+                t, f = self.get_errs(model, X_train, y_train, X_test, y_test)
+                test_losses.append(t)
+                f1_scores.append(f)
                 print('Epoch: '+str(epoch+1))
         f1_max = np.max(f1_scores)
         test_for_f1 = test_losses[np.argmax(f1_scores)]

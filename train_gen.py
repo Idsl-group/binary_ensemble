@@ -21,7 +21,9 @@ import logging
     #  X, y64, test_size=0.2)
 logging.basicConfig(level=logging.DEBUG, filename="logfile", filemode="a+",
                         format="%(message)s")
-for j in range(7, 11):
+all_mcirs = [10, 100, 200, 300, 450]
+
+for j in all_mcirs:
     print('####################################################################')
     print(j*50)
     all_b = np.zeros((5, 2))

@@ -39,6 +39,7 @@ def process_wearable_dataset(minority):
     y += 1
     X = np.array(new_data, dtype=float)
     y = np.array(y, dtype=int)
+    print(X.shape)
 
     n, d = X.shape
     ind = np.random.choice(range(n), n, replace=False)
@@ -79,18 +80,17 @@ def process_wearable_dataset(minority):
     new = np.zeros(size).astype(int) + 2
     y_new = np.concatenate((y_new, new))
 
-    # TODO: Remove this later
-    X_new = X_train.copy()
-    y_new = y_train.copy()
-
-
     n, d = X_new.shape
     indices = np.random.choice(range(n), n, replace=False)
     X_new = X_new[indices]
     y_new = y_new[indices]
 
+    counts = np.bincount(y_new)
+    mcir = counts[0]/counts[1] * counts[0]/counts[2]
+
     print(np.bincount(y_new))
-    return X_new, y_new, X_test, y_test
+    print(np.bincount(y_test))
+    return X_new, y_new, X_test, y_test, mcir
 
 
 def mnist_imbalanced():

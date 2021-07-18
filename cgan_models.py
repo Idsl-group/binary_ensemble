@@ -119,7 +119,7 @@ class CGAN():
         self.zdim = zdim
         self.num_classes = num_classes
 
-    def train(self, X_train, y_train, X_test, y_test, batch_size=64, num_epoch=1000):
+    def train(self, X_train, y_train, X_test, y_test, model, batch_size=64, num_epoch=1000):
         n, _ = X_train.shape
         y = y_train.copy()
         X = X_train.copy()
@@ -170,22 +170,17 @@ class CGAN():
                     gen_loss.backward()
                     self.gen_optimizer.step()
 
-            t, f = self.getErrs(X_train, y_train, X_test, y_test)
-            test_errs.append(t)
-            f1.append(f)
-            if (epoch + 1) % 25 == 0:
+            if (epoch + 1) % 20 == 0:
+                t, f = self.getErrs(X_train, y_train, X_test, y_test, model)
+                test_errs.append(t)
+                f1.append(f)
                 print('Epoch: '+str(epoch+1))
-        #  print('*************************************')
-        #  print('CGAN')
-        #  print('F1 Score: '+str(np.max(f1)))
-        #  print('Test Accuracy: '+str(test_errs[np.argmax(f1)]))
-        #  print('Epochs Required: '+str(np.argmax(f1)))
         f1_max = np.max(f1)
         test_for_f1 = test_errs[np.argmax(f1)]
         epoch_no = np.argmax(f1)
         return f1_max, test_for_f1, epoch_no
 
-    def getErrs(self, X, y, X_test, y_test):
+    def getErrs(self, X, y, X_test, y_test, model):
         X_train = X.copy()
         y_train = y.copy()
         counts = np.bincount(y_train)
@@ -205,8 +200,6 @@ class CGAN():
             y_train = np.concatenate((y_train, labels))
 
         n, d = X_train.shape
-        #  model = Classifier(d, 3)
-        model = RandomForestClassifier()
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         test_err = (y_pred == y_test).mean()
